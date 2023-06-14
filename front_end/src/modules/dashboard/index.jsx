@@ -1,6 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
 import Avatar from "../../assets/elon.jpg";
 import Conv1 from "../../assets/mark.jpeg";
+import Img1 from "../../assets/img1.png";
+import Img2 from "../../assets/img2.png";
+import Img3 from "../../assets/img3.png";
+import Img4 from "../../assets/img4.png";
+import Img5 from "../../assets/img5.png";
+import Img6 from "../../assets/img6.png";
+
+
+
+
+
+
 import Input from "../../componats/input";
 import { io } from 'socket.io-client'
 
@@ -11,21 +23,25 @@ const Dashboard = () => {
   const messageRef = useRef(null)
   const [socket, setSocket] = useState(null)
   const [messages, setMessages] = useState({});
+  console.log('messages',messages)
   const [users, setUsers] = useState([])
-  const contacts = [
-    { name: "Arun", status: "Unavailable", img: Avatar },
-    { name: "Dilsha", status: "Available", img: Avatar },
-    { name: "Appu", status: "Available", img: Avatar },
-    { name: "Sreeju", status: "Available", img: Avatar },
-    { name: "Kumar", status: "Available", img: Avatar },
-    { name: "Sarath", status: "Available", img: Avatar },
-    { name: "Pradheesh", status: "Available", img: Avatar },
-    { name: "Manu", status: "Available", img: Avatar },
-    { name: "Meenu", status: "Available", img: Avatar },
+  
+
+  const images = [
+     Img1, Img2, Img3,Img4,Img5, Img6
   ];
+  if(users){
+    users.forEach((item,index)=>{
+      item.user.img=images[index];
+	console.log(item.user);
+    })
+  }
+  console.log(users);
+
   // useEffect(() => {
 	// 	setSocket(io('http://localhost:8080'))
 	// }, [])
+ 
   const fetchMessages = async (conversationId, receiver) => {
 
 		const res = await fetch(`http://localhost:8000/api/message/${conversationId}?senderId=${user?.id}&&receiverId=${receiver?.receiverId}`, {
@@ -35,7 +51,7 @@ const Dashboard = () => {
 			}
 		});
 		const resData = await res.json();
-    console.log(resData)
+    
 		setMessages({ messages: resData, receiver, conversationId })
 	}
   const sendMessage = async (e) => {
@@ -59,6 +75,21 @@ const Dashboard = () => {
 			})
 		});
 	}
+  useEffect(() => {
+		const fetchUsers = async () => {
+			const res = await fetch(`http://localhost:8000/api/users/${user?.id}`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+				}
+			});
+			const resData = await res.json();
+      
+      console.log(resData)
+			setUsers(resData)
+		}
+		fetchUsers()
+	}, [])
 
 
   useEffect(() => {
@@ -71,10 +102,29 @@ const Dashboard = () => {
 				}
 			});
 			const resData = await res.json()
+      console.log(resData)
 			setConversations(resData)
 		}
-		fetchConversations()
-	}, [])
+		fetchConversations();
+	}, [user]);
+
+
+
+if(conversations){
+  var newList =[]
+  conversations.forEach((item)=>{
+    newList.push(item.user.receiverId);
+  });
+}
+
+
+if(conversations && users){
+
+  var result = users.filter(item=>newList.includes(item.user.receiverId));
+ 
+  
+
+}
   
   return (
     <div className="bg-[#edf3fc] h-screen flex justify-center items-center">
@@ -99,12 +149,13 @@ const Dashboard = () => {
           <div className="mx-14 mt-10">
             <div className="text-primary text-lg">Messages</div>
             <div>
-              { conversations.length > 0 ?conversations.map(({ conversationId, user }) => {
+              { conversations.length > 0 ?conversations.map(({ conversationId, user  },index) => {
+                console.log(index)
                 return (
                   <div className="flex  items-center py-4 border-b border-b-gray-300">
                     <div className="cursor-pointer flex items-center" onClick={() => fetchMessages(conversationId, user)} >
                       <div>
-                        <img src={Conv1} alt="avatar" width={60} height={60}  className=" p-[2px] rounded-full"/>
+                        <img src={result[index]?.user.img} alt="avatar" width={60} height={60}  className=" p-[2px] rounded-full"/>
                       </div>
                       <div className="ml-6">
                         <h3 className="text-lg">{user.fullName}</h3>
@@ -121,9 +172,9 @@ const Dashboard = () => {
         </div>
         <div className="w-[50%] h-screen bg-white flex flex-col items-center">
         {
-					messages?.receiver?.fullName &&
+					messages?.receiver?.fullName ?
 					<div className='w-[75%] bg-secondary h-[80px] my-14 rounded-full flex items-center px-14 py-2'>
-						<div className='cursor-pointer'><img src={Conv1} width={60} height={60} className="rounded-full" /></div>
+						<div className='cursor-pointer'><img src={messages?.receiver?.img} width={60} height={60} className="rounded-full" /></div>
 						<div className='ml-6 mr-auto'>
 							<h3 className='text-lg'>{messages?.receiver?.fullName}</h3>
 							<p className='text-sm font-light text-gray-600'>{messages?.receiver?.email}</p>
@@ -163,7 +214,7 @@ const Dashboard = () => {
                 <path d="M3.887 6h10.08c1.468 0 3.033 1.203 3.033 2.803v8.196a.991 .991 0 0 1 -.975 1h-10.373c-1.667 0 -2.652 -1.5 -2.652 -3l.01 -8a.882 .882 0 0 1 .208 -.71a.841 .841 0 0 1 .67 -.287z"></path>
               </svg>
             </div>
-					</div>
+					</div>:<div className='w-[75%] bg-secondary h-[80px] my-14 rounded-full flex items-center px-14 py-2'></div>
 				}
          
           <div className="h-[75%] w-full overflow-y-scroll scrollbar-hide ">
@@ -238,7 +289,7 @@ const Dashboard = () => {
 								return (
 									<div className='flex items-center py-8 border-b border-b-gray-300'>
 										<div className='cursor-pointer flex items-center' onClick={() => fetchMessages('new', user)}>
-											<div><img src={Conv1} className="w-[60px] h-[60px] rounded-full p-[2px] border border-primary" /></div>
+											<div><img src={user?.img} className="w-[60px] h-[60px] rounded-full p-[2px] border border-primary" /></div>
 											<div className='ml-6'>
 												<h3 className='text-lg font-semibold'>{user?.fullName}</h3>
 												<p className='text-sm font-light text-gray-600'>{user?.email}</p>
