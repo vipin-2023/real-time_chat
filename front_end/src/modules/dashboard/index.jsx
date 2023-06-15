@@ -1,12 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Avatar from "../../assets/elon.jpg";
-import Conv1 from "../../assets/mark.jpeg";
-import Img1 from "../../assets/img1.png";
-import Img2 from "../../assets/img2.png";
-import Img3 from "../../assets/img3.png";
-import Img4 from "../../assets/img4.png";
-import Img5 from "../../assets/img5.png";
-import Img6 from "../../assets/img6.png";
+import Img from "../../assets/chatImg.png";
 
 
 
@@ -24,19 +18,24 @@ const Dashboard = () => {
   const [socket, setSocket] = useState(null)
   const [messages, setMessages] = useState({});
   console.log('messages',messages)
+  console.log('conversations',conversations)
   const [users, setUsers] = useState([])
   
 
-  const images = [
-     Img1, Img2, Img3,Img4,Img5, Img6
-  ];
+  
   if(users){
-    users.forEach((item,index)=>{
-      item.user.img=images[index];
-	console.log(item.user);
+    users.forEach((item)=>{
+      item.user.img=Img;
+	
     })
   }
-  console.log(users);
+  if(conversations){
+    conversations.forEach((item)=>{
+      item.user.img=Img;
+	
+    })
+  }
+  
 
   // useEffect(() => {
 	// 	setSocket(io('http://localhost:8080'))
@@ -102,7 +101,7 @@ const Dashboard = () => {
 				}
 			});
 			const resData = await res.json()
-      console.log(resData)
+      
 			setConversations(resData)
 		}
 		fetchConversations();
@@ -150,7 +149,7 @@ if(conversations && users){
             <div className="text-primary text-lg">Messages</div>
             <div>
               { conversations.length > 0 ?conversations.map(({ conversationId, user  },index) => {
-                console.log(index)
+                
                 return (
                   <div className="flex  items-center py-4 border-b border-b-gray-300">
                     <div className="cursor-pointer flex items-center" onClick={() => fetchMessages(conversationId, user)} >

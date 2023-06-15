@@ -150,8 +150,6 @@ app.get('/api/message/:conversationId', async (req, res) => {
               return res.status(200).json([])
           }
       } else {
-      
-
           checkMessages(conversationId);
       }
   } catch (error) {
