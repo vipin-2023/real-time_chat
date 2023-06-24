@@ -2,11 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import Avatar from "../../assets/elon.jpg";
 import Img from "../../assets/chatImg.png";
 
-
-
-
-
-
 import Input from "../../componats/input";
 import { io } from 'socket.io-client'
 
@@ -17,9 +12,10 @@ const Dashboard = () => {
   const messageRef = useRef(null)
   const [socket, setSocket] = useState(null)
   const [messages, setMessages] = useState({});
-  console.log('messages',messages)
+  console.log('messages',messages) 
   console.log('conversations',conversations)
   const [users, setUsers] = useState([])
+  console.log('conversations',users)
   
 
   
@@ -37,10 +33,29 @@ const Dashboard = () => {
   }
   
 
-  // useEffect(() => {
-	// 	setSocket(io('http://localhost:8080'))
-	// }, [])
- 
+  useEffect(() => {
+		setSocket(io('http://localhost:8080'))
+	}, [])
+
+  
+
+  useEffect(() => {
+		socket?.emit('addUser', user?.id);
+		socket?.on('getUsers', users => {
+			console.log('activeUsers :>> ', users);
+		})
+		socket?.on('getMessage', data => {
+			setMessages(prev => ({
+				...prev,
+				messages: [...prev.messages, { user: data.user, message: data.message }]
+			}))
+		})
+	}, [socket])
+
+	useEffect(() => {
+		messageRef?.current?.scrollIntoView({ behavior: 'smooth' })
+	}, [messages?.messages])
+
   const fetchMessages = async (conversationId, receiver) => {
 
 		const res = await fetch(`http://localhost:8000/api/message/${conversationId}?senderId=${user?.id}&&receiverId=${receiver?.receiverId}`, {
@@ -54,13 +69,13 @@ const Dashboard = () => {
 		setMessages({ messages: resData, receiver, conversationId })
 	}
   const sendMessage = async (e) => {
-		// setMessage('')
-		// socket?.emit('sendMessage', {
-		// 	senderId: user?.id,
-		// 	receiverId: messages?.receiver?.receiverId,
-		// 	message,
-		// 	conversationId: messages?.conversationId
-		// });
+		setMessage('')
+		socket?.emit('sendMessage', {
+			senderId: user?.id,
+			receiverId: messages?.receiver?.receiverId,
+			message,
+			conversationId: messages?.conversationId
+		});
 		const res = await fetch(`http://localhost:8000/api/message`, {
 			method: 'POST',
 			headers: {
@@ -88,7 +103,9 @@ const Dashboard = () => {
 			setUsers(resData)
 		}
 		fetchUsers()
-	}, [])
+	}, []);
+  
+
 
 
   useEffect(() => {
@@ -151,7 +168,7 @@ if(conversations && users){
               { conversations.length > 0 ?conversations.map(({ conversationId, user  },index) => {
                 
                 return (
-                  <div className="flex  items-center py-4 border-b border-b-gray-300">
+                  <div key={conversationId} className="flex  items-center py-4 border-b border-b-gray-300">
                     <div className="cursor-pointer flex items-center" onClick={() => fetchMessages(conversationId, user)} >
                       <div>
                         <img src={result[index]?.user.img} alt="avatar" width={60} height={60}  className=" p-[2px] rounded-full"/>
@@ -285,8 +302,9 @@ if(conversations && users){
 					{
 						users.length > 0 ?
 							users.map(({ userId, user }) => {
+
 								return (
-									<div className='flex items-center py-8 border-b border-b-gray-300'>
+									<div key={userId} className='flex items-center py-8 border-b  px-3 border-b-gray-300'>
 										<div className='cursor-pointer flex items-center' onClick={() => fetchMessages('new', user)}>
 											<div><img src={user?.img} className="w-[60px] h-[60px] rounded-full p-[2px] border border-primary" /></div>
 											<div className='ml-6'>
