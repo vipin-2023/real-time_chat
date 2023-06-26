@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const url = `mongodb+srv://vipincpy123:vipin123@cluster0.2wghbnp.mongodb.net/?retryWrites=true&w=majority`;
+const url = process.env.MONGO;
 
 mongoose.connect(url,{
     useNewUrlParser: true, 
