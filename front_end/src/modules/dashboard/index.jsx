@@ -34,7 +34,7 @@ const Dashboard = () => {
   
 
   useEffect(() => {
-		setSocket(io('http://localhost:8080'))
+		setSocket(io('http://localhost:8000'))
 	}, [])
 
   

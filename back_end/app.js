@@ -28,11 +28,61 @@ const userRoutes = require('./routes/users');
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/conversations', conversationRoutes(io));
-app.use('/api/messages', messageRoutes(io));
+app.use('/api/message', messageRoutes(io));
 app.use('/api/users', userRoutes);
 
 // Socket.io
 let users = [];
+
+// Function to add a user to the users array
+function addUser(socketId, userId) {
+    const existingUser = users.find(user => user.userId === userId);
+  
+    if (!existingUser) {
+      const user = { userId, socketId };
+      users.push(user);
+      console.log(`User added: ${userId}, Socket ID: ${socketId}`);
+    } else {
+      console.log(`User already exists: ${userId}`);
+    }
+  
+    // Optionally, you may return the updated users array or other information
+    return users;
+  }
+  
+  // Function to handle sending messages
+  function handleSendMessage(socket, senderId, receiverId, message, conversationId) {
+    const receiver = users.find(user => user.userId === receiverId);
+    const sender = users.find(user => user.userId === senderId);
+  
+    if (receiver) {
+      io.to(receiver.socketId).to(sender.socketId).emit('getMessage', {
+        senderId,
+        message,
+        conversationId,
+        receiverId,
+        user: { id: senderId, fullName: 'Sender Name', email: 'sender@example.com' } // Replace with actual user data
+      });
+    } else {
+      io.to(sender.socketId).emit('getMessage', {
+        senderId,
+        message,
+        conversationId,
+        receiverId,
+        user: { id: senderId, fullName: 'Sender Name', email: 'sender@example.com' } // Replace with actual user data
+      });
+    }
+  }
+  
+  // Function to handle user disconnection
+  function handleUserDisconnect(socketId) {
+    users = users.filter(user => user.socketId !== socketId);
+    io.emit('getUsers', users);
+    console.log(`User disconnected: Socket ID ${socketId}`);
+  }
+  
+
+
 io.on('connection', (socket) => {
     console.log('User connected', socket.id);
 
@@ -41,6 +91,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('sendMessage', async ({ senderId, receiverId, message, conversationId }) => {
+        console.log(senderId)
+        console.log(receiverId)
+        console.log(message)
+        console.log(conversationId)
         handleSendMessage(socket, senderId, receiverId, message, conversationId);
     });
 

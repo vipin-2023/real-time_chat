@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Messages = require('../models/Messages');
-const { handleSendMessage } = require('./socket-helpers');
+
+const Conversations = require('../models/Conversations')
+const Users = require('../models/Users')
 
 module.exports = (io) => {
     router.post('/', async (req, res) => {
