@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Conversations = require('../models/Conversations');
-const { addUser, handleSendMessage, handleUserDisconnect } = require('./socket-helpers');
+const Users = require("../models/Users")
 
-module.exports = (io) => {
+
+module.exports = () => {
     router.post('/', async (req, res) => {
         // Implementation of conversation creation
         try {

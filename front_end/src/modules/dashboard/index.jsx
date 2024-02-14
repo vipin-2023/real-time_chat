@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import Avatar from "../../assets/elon.jpg";
 import Img from "../../assets/chatImg.png";
-
 import Input from "../../componats/input";
 import { io } from 'socket.io-client'
 
+
 const Dashboard = () => {
+
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user:detail')))
   const [conversations, setConversations] = useState([]);
@@ -18,26 +19,21 @@ const Dashboard = () => {
   console.log('conversations',users)
   
 
-  
   if(users){
     users.forEach((item)=>{
       item.user.img=Img;
-	
     })
   }
+  
   if(conversations){
     conversations.forEach((item)=>{
       item.user.img=Img;
-	
     })
   }
   
-
   useEffect(() => {
 		setSocket(io('http://localhost:8000'))
 	}, [])
-
-  
 
   useEffect(() => {
 		socket?.emit('addUser', user?.id);
@@ -98,16 +94,12 @@ const Dashboard = () => {
 				}
 			});
 			const resData = await res.json();
-      
       console.log(resData)
 			setUsers(resData)
 		}
 		fetchUsers()
 	}, []);
   
-
-
-
   useEffect(() => {
 		const loggedInUser = JSON.parse(localStorage.getItem('user:detail'))
 		const fetchConversations = async () => {
@@ -118,13 +110,10 @@ const Dashboard = () => {
 				}
 			});
 			const resData = await res.json()
-      
 			setConversations(resData)
 		}
 		fetchConversations();
 	}, [user]);
-
-
 
 if(conversations){
   var newList =[]
@@ -133,13 +122,8 @@ if(conversations){
   });
 }
 
-
 if(conversations && users){
-
   var result = users.filter(item=>newList.includes(item.user.receiverId));
- 
-  
-
 }
   
   return (
@@ -240,7 +224,7 @@ if(conversations && users){
 								messages.messages.map(({ message, user: { id } = {} }) => {
 									return (
 										<>
-										<div className={`max-w-[40%] rounded-b-xl p-4 mb-6 ${id === user?.id ? 'bg-primary text-white rounded-tl-xl ml-auto' : 'bg-secondary rounded-tr-xl'} `}>{message}</div>
+										<div key={user?.id} className={`max-w-[40%] rounded-b-xl p-4 mb-6 ${id === user?.id ? 'bg-primary text-white rounded-tl-xl ml-auto' : 'bg-secondary rounded-tr-xl'} `}>{message}</div>
 										<div ref={messageRef}></div>
 										</>
 									)

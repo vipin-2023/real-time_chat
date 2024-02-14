@@ -1,7 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 require('dotenv').config();
+
+// express object
 const app = express();
+
 const httpServer = require('http').createServer(app);
 const io = require('socket.io')(httpServer, {
     cors: {
@@ -9,6 +12,9 @@ const io = require('socket.io')(httpServer, {
     }
 });
 
+
+
+console.log(`IO : ${io}`)
 const port = process.env.PORT || 8000;
 
 // Middleware
@@ -31,70 +37,71 @@ app.use('/api/conversations', conversationRoutes(io));
 app.use('/api/message', messageRoutes(io));
 app.use('/api/users', userRoutes);
 
-// Socket.io
+const Users = require("./models/Users");
+
 let users = [];
 
-// Function to add a user to the users array
 function addUser(socketId, userId) {
-    const existingUser = users.find(user => user.userId === userId);
-  
-    if (!existingUser) {
-      const user = { userId, socketId };
-      users.push(user);
-      console.log(`User added: ${userId}, Socket ID: ${socketId}`);
-    } else {
-      console.log(`User already exists: ${userId}`);
+    const isUserExist = users.find(user => user.userId === userId);
+    if (!isUserExist) {
+        const user = { userId, socketId };
+        users.push(user);
+        if (io) {
+            io.emit('getUsers', users);
+        } else {
+            console.error('io is undefined');
+        }
     }
-  
-    // Optionally, you may return the updated users array or other information
-    return users;
-  }
-  
-  // Function to handle sending messages
-  function handleSendMessage(socket, senderId, receiverId, message, conversationId) {
-    const receiver = users.find(user => user.userId === receiverId);
+}
+
+async function handleSendMessage (socket, senderId, receiverId, message, conversationId)  {
     const sender = users.find(user => user.userId === senderId);
-  
+    const receiver = users.find(user => user.userId === receiverId);
+    const user = await Users.findById(senderId);
+
     if (receiver) {
-      io.to(receiver.socketId).to(sender.socketId).emit('getMessage', {
-        senderId,
-        message,
-        conversationId,
-        receiverId,
-        user: { id: senderId, fullName: 'Sender Name', email: 'sender@example.com' } // Replace with actual user data
-      });
+        if (io) {  // Check if io is defined
+            io.to(receiver.socketId).to(sender.socketId).emit('getMessage', {
+                senderId,
+                message,
+                conversationId,
+                receiverId,
+                user: { id: user._id, fullName: user.fullName, email: user.email }
+            });
+        } else {
+            console.error('io is undefined');
+        }
     } else {
-      io.to(sender.socketId).emit('getMessage', {
-        senderId,
-        message,
-        conversationId,
-        receiverId,
-        user: { id: senderId, fullName: 'Sender Name', email: 'sender@example.com' } // Replace with actual user data
-      });
+        if (io) {  // Check if io is defined
+            io.to(sender.socketId).emit('getMessage', {
+                senderId,
+                message,
+                conversationId,
+                receiverId,
+                user: { id: user._id, fullName: user.fullName, email: user.email }
+            });
+        } else {
+            console.error('io is undefined');
+        }
     }
-  }
-  
-  // Function to handle user disconnection
-  function handleUserDisconnect(socketId) {
+}
+
+function handleUserDisconnect(socketId) {
     users = users.filter(user => user.socketId !== socketId);
-    io.emit('getUsers', users);
-    console.log(`User disconnected: Socket ID ${socketId}`);
-  }
-  
+    if (io) {
+        io.emit('getUsers', users);
+    } else {
+        console.error('io is undefined');
+    }
+}
 
 
 io.on('connection', (socket) => {
-    console.log('User connected', socket.id);
-
     socket.on('addUser', userId => {
         addUser(socket.id, userId);
     });
 
     socket.on('sendMessage', async ({ senderId, receiverId, message, conversationId }) => {
-        console.log(senderId)
-        console.log(receiverId)
-        console.log(message)
-        console.log(conversationId)
         handleSendMessage(socket, senderId, receiverId, message, conversationId);
     });
 
@@ -106,3 +113,4 @@ io.on('connection', (socket) => {
 httpServer.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
+
